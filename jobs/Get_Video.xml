@@ -1,0 +1,54 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>URL</name>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>set -eu
+STORAGE_LIMIT=10000 # Kilobytes
+TWITCH_DEFAULT_FORMAT=360p # Audio_Only = mp4 audio 
+YOUTUBE_DEFAULT_FORMAT=18 # 18 = 360p mp4, 140 = m4a (audio only 44k medium quality)
+
+STORAGE_USE=$(du -cs &quot;$WORKSPACE&quot; | grep total | awk &apos;{ print $1 }&apos; | tr -d &apos; &apos;)
+
+echo &quot;Current storage use is $STORAGE_USE kB&quot;
+
+if [ $STORAGE_USE -ge $STORAGE_LIMIT ]; then
+  echo &quot;Maximum storage allowed reached.&quot; 2&gt;&amp;1
+  exit 2
+fi
+  
+if [ $(echo ${URL} | grep -E &apos;^https://youtu.*&apos;) ]; then
+  FORMAT=$YOUTUBE_DEFAULT_FORMAT
+elif [ $(echo ${URL} | grep -E &apos;^https://www.twitch.tv/*&apos;) ]; then
+  FORMAT=$TWITCH_DEFAULT_FORMAT
+else
+  echo &quot;Unsupported video source URL. Exiting.&quot;  2&gt;&amp;1
+  exit 1
+fi
+
+yt-dlp -f $FORMAT &quot;$URL&quot;</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>
